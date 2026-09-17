@@ -527,4 +527,8 @@ does not require the Client to provide values for all optional properties.
 
 ---
 
+# Part C – Validation Challenge
 
+# Part D – Preset Configurations
+
+# Part E - Clean Code

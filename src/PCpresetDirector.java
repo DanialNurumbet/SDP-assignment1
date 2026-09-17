@@ -1,5 +1,6 @@
 public class PCpresetDirector {
-    public PCconfig PCBasic(){
+
+    public PCconfig buildBasicPC(){
         return new PCconfig.Builder(
                 "Intel Core i3-12100",
                 "MSI H610M",
@@ -13,7 +14,7 @@ public class PCpresetDirector {
                 .build();
     }
 
-    public PCconfig PCGaming(){
+    public PCconfig buildGamingPC(){
         return new PCconfig.Builder(
                 "AMD Ryzen 7 7800X3D",
                 "ASUS ROG STRIX B650",
@@ -39,7 +40,7 @@ public class PCpresetDirector {
                 .build();
     }
 
-    public PCconfig PCWorkstation(){
+    public PCconfig buildWorkstationPC(){
         return new PCconfig.Builder(
                 "Intel Core i9-14900K",
                 "ASUS ProArt Z790",

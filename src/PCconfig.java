@@ -70,10 +70,10 @@ public class PCconfig {
                 int ramGb,
                 int storageGb
         ) {
-        this.processor = processor;
-        this.motherboard = motherboard;
-        this.ramGb = ramGb;
-        this.storageGb = storageGb;
+            this.processor = processor;
+            this.motherboard = motherboard;
+            this.ramGb = ramGb;
+            this.storageGb = storageGb;
         }
 
         public Builder usageType(String usageType) {
@@ -140,6 +140,7 @@ public class PCconfig {
             this.monitorResolution = monitorResolution;
             return this;
         }
+
         public Builder keyboard(String keyboard) {
             this.keyboard = keyboard;
             return this;
@@ -204,95 +205,101 @@ public class PCconfig {
             this.budget = budget;
             return this;
         }
-        public PCconfig build(){
+
+        public PCconfig build() {
 
             validate();
 
             return new PCconfig(this);
         }
 
-        private void validate(){
-            validateGPUpower();
-            validateConfig();
+        private void validate() {
+            validatePowerSupplyCapacity();
+            validateGamingConfig();
 
             validateRam();
             validateStorage();
             validateBudget();
         }
 
-        private void validateRam(){
-            if(ramGb < 0){
+        private void validateRam() {
+            if (ramGb < 0) {
                 throw new IllegalArgumentException("ramGb must be greater than 0 GB");
             }
         }
 
-        private void validateStorage(){
-            if(storageGb < 0){
+        private void validateStorage() {
+            if (storageGb < 0) {
                 throw new IllegalArgumentException("storageGb must be greater than 0 GB");
             }
         }
 
-        private void validateBudget(){
-            if(budget < 0){
+        private void validateBudget() {
+            if (budget < 0) {
                 throw new IllegalArgumentException("budget must be greater than 0 GB");
             }
         }
 
-        private void validateGPUpower(){
-            if (graphicsCard == null){
+        private void validatePowerSupplyCapacity() {
+            if (graphicsCard == null) {
                 return;
             }
-            int neededPower = getNeededPower();
-            if (powerSupplyW < neededPower){
+            int requiredWattage = calculateRequiredPowerSupplyW();
+            if (powerSupplyW < requiredWattage) {
                 throw new IllegalArgumentException(
-                        graphicsCard + " requires a power supply of at least " + neededPower + " W"
+                        graphicsCard + " requires a power supply of at least " + requiredWattage + " W"
                 );
             }
         }
 
-        private int getNeededPower(){
-            if (graphicsCard.contains("4090")){
-                return 850;
-            }
-            if (graphicsCard.contains("4080")){
-                return 750;
-            }
-            if (graphicsCard.contains("4070")){
-                return 650;
-            }
+        private int calculateRequiredPowerSupplyW() {
+            if (isGpuModel("4090")) return 850;
+            if (isGpuModel("4080")) return 750;
+            if (isGpuModel("4070")) return 650;
             return 500;
         }
 
-        private void  validateConfig(){
-            if (!"GAMING".equalsIgnoreCase(usageType)){
+        private void validateGamingConfig() {
+            if (!isGamingProfile()) {
                 return;
             }
-            if (isHighPerformGPU()){
-                if (ramGb < 16){
-                    throw new IllegalArgumentException(
-                            "Gaming configuration with a high-preformance GPU require at least 16GB of RAM"
-                    );
-                }
-                if (powerSupplyW < 750) {
-                    throw new IllegalArgumentException(
-                            "Gaming configurations with a high-performance " +
-                                    "graphics card require at least a 750W power supply."
-                    );
-                }
-                if ("Stock".equalsIgnoreCase(coolingType)) {
-                    throw new IllegalArgumentException(
-                            "Gaming configurations with a high-performance " +
-                                    "graphics card require non-stock cooling."
-                    );
-                }
+            if (isHighPerformGPU()) {
+                validateGamingRam();
+                validateGamingPowerSupply();
+                validateGamingCooling();
             }
         }
 
-        private boolean isHighPerformGPU(){
-            return graphicsCard != null && (graphicsCard.contains("4090") || graphicsCard.contains("4080") ||
-                    graphicsCard.contains("4070"));
+        private boolean isGamingProfile() {
+            return "GAMING".equalsIgnoreCase(usageType);
+        }
+
+        private void validateGamingRam() {
+            if (ramGb < 16) {
+                throw new IllegalArgumentException("Gaming configuration with a high-performance GPU requires at least 16GB of RAM");
+            }
+        }
+
+        private void validateGamingPowerSupply() {
+            if (powerSupplyW < 750) {
+                throw new IllegalArgumentException("Gaming configurations with a high-performance graphics card require at least a 750W power supply.");
+            }
+        }
+
+        private void validateGamingCooling() {
+            if ("Stock".equalsIgnoreCase(coolingType)) {
+                throw new IllegalArgumentException("Gaming configurations with a high-performance graphics card require non-stock cooling.");
+            }
+        }
+        private boolean isGpuModel(String gpuModel) {
+            return graphicsCard != null && graphicsCard.contains(gpuModel);
+        }
+
+        private boolean isHighPerformGPU() {
+            return isGpuModel("4090") || isGpuModel("4080") || isGpuModel("4070");
         }
     }
+
 
     private PCconfig(Builder builder) {
         this.processor = builder.processor;

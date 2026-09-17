@@ -1,12 +1,10 @@
 public class Main {
     public static void main(String[] args) {
-        NetworkAdapter networkAdapter = new NetworkAdapter("Intel", "Wi-Fi 6E", 2500);
-
         PCpresetDirector director = new PCpresetDirector();
 
-        PCconfig basic = director.PCBasic();
-        PCconfig gaming =  director.PCGaming();
-        PCconfig workstation = director.PCWorkstation();
+        PCconfig basic = director.buildBasicPC();
+        PCconfig gaming =  director.buildGamingPC();
+        PCconfig workstation = director.buildWorkstationPC();
 
         System.out.println("-----BASIC-----");
         System.out.println(basic);
