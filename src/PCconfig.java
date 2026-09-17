@@ -205,7 +205,92 @@ public class PCconfig {
             return this;
         }
         public PCconfig build(){
+
+            validate();
+
             return new PCconfig(this);
+        }
+
+        private void validate(){
+            validateGPUpower();
+            validateConfig();
+
+            validateRam();
+            validateStorage();
+            validateBudget();
+        }
+
+        private void validateRam(){
+            if(ramGb < 0){
+                throw new IllegalArgumentException("ramGb must be greater than 0 GB");
+            }
+        }
+
+        private void validateStorage(){
+            if(storageGb < 0){
+                throw new IllegalArgumentException("storageGb must be greater than 0 GB");
+            }
+        }
+
+        private void validateBudget(){
+            if(budget < 0){
+                throw new IllegalArgumentException("budget must be greater than 0 GB");
+            }
+        }
+
+        private void validateGPUpower(){
+            if (graphicsCard == null){
+                return;
+            }
+            int neededPower = getNeededPower();
+            if (powerSupplyW < neededPower){
+                throw new IllegalArgumentException(
+                        graphicsCard + " requires a power supply of at least " + neededPower + " W"
+                );
+            }
+        }
+
+        private int getNeededPower(){
+            if (graphicsCard.contains("4090")){
+                return 850;
+            }
+            if (graphicsCard.contains("4080")){
+                return 750;
+            }
+            if (graphicsCard.contains("4070")){
+                return 650;
+            }
+            return 500;
+        }
+
+        private void  validateConfig(){
+            if (!"GAMING".equalsIgnoreCase(usageType)){
+                return;
+            }
+            if (isHighPerformGPU()){
+                if (ramGb < 16){
+                    throw new IllegalArgumentException(
+                            "Gaming configuration with a high-preformance GPU require at least 16GB of RAM"
+                    );
+                }
+                if (powerSupplyW < 750) {
+                    throw new IllegalArgumentException(
+                            "Gaming configurations with a high-performance " +
+                                    "graphics card require at least a 750W power supply."
+                    );
+                }
+                if ("Stock".equalsIgnoreCase(coolingType)) {
+                    throw new IllegalArgumentException(
+                            "Gaming configurations with a high-performance " +
+                                    "graphics card require non-stock cooling."
+                    );
+                }
+            }
+        }
+
+        private boolean isHighPerformGPU(){
+            return graphicsCard != null && (graphicsCard.contains("4090") || graphicsCard.contains("4080") ||
+                    graphicsCard.contains("4070"));
         }
     }
 
