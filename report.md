@@ -432,19 +432,6 @@ The constructor is private, so the Client cannot directly construct `PCconfig`.
 
 The intended construction process is therefore:
 
-```text
-Client
-   |
-   v
-PCconfig.Builder
-   |
-   | configuration methods
-   v
-build()
-   |
-   v
-PCconfig
-```
 
 ---
 
@@ -528,7 +515,254 @@ does not require the Client to provide values for all optional properties.
 ---
 
 # Part C – Validation Challenge
+    
+In order not to create an invalid product - I made 3 single-field and 2 cross-field validation rules:
 
+* RAM Capacity validation - ramGb must be strictly greater than 0
+* Storage Capacity validation - storageGb must be strictly greater than 0
+* Budget Validation - budged can not be negative
+
+* GPU Power Supply Capacity Validation - A dedicated graphics card requires a sufficient power supply unit
+* Gaming Profile Configuration Rules - High-performance gaming builds must meet minimum hardware thresholds (RAM, Power, Cooling)
 # Part D – Preset Configurations
-
+I created PCpresetDirector and 3 preset configurations (Basic PC, Gaming PC, Workstation PC)
 # Part E - Clean Code
+## 1) 
+BEFORE
+
+```java
+private void validateGPUpower(){
+    if (graphicsCard == null){
+        return;
+    }
+    int neededPower = getNeededPower();
+    if (powerSupplyW < neededPower){
+        throw new IllegalArgumentException(
+                graphicsCard + " requires a power supply of at least " + neededPower + " W"
+        );
+    }
+}
+
+private int getNeededPower(){
+    if (graphicsCard.contains("4090")){
+        return 850;
+    }
+    if (graphicsCard.contains("4080")){
+        return 750;
+    }
+    if (graphicsCard.contains("4070")){
+        return 650;
+    }
+    return 500;
+}
+
+private boolean isHighPerformGPU(){
+    return graphicsCard != null && (graphicsCard.contains("4090") || graphicsCard.contains("4080") ||
+            graphicsCard.contains("4070"));
+}
+```
+AFTER
+```java
+private void validatePowerSupplyCapacity() {
+    if (graphicsCard == null) {
+        return;
+    }
+    int requiredWattage = calculateRequiredPowerSupplyWattage();
+    if (powerSupplyW < requiredWattage) {
+        throw new IllegalArgumentException(
+                graphicsCard + " requires a power supply of at least " + requiredWattage + " W"
+        );
+    }
+}
+
+private int calculateRequiredPowerSupplyWattage() {
+    if (isGpuModel("4090")) return 850;
+    if (isGpuModel("4080")) return 750;
+    if (isGpuModel("4070")) return 650;
+    return 500;
+}
+
+private boolean isHighPerformanceGpu() {
+    return isGpuModel("4090") || isGpuModel("4080") || isGpuModel("4070");
+}
+
+private boolean isGpuModel(String model) {
+    return graphicsCard != null && graphicsCard.contains(model);
+}
+```
+**What was wrong?**
+
+* Duplicated Code: The *null-check* and *contains()* call were duplicated across *getNeededPower()* and *isHighPerformGPU()*
+* Inaccurate/Abbreviated Naming: *validateGPUpower* used non-standard abbreviations, and *getNeededPower* sounded like a standard getter despite performing logic.
+
+**Which principle applied?**
+* DRY: Extracted string matching and null safety into a reusable predicate method *isGpuModel(String model)*
+* Descriptive Naming: Renamed methods to reveal intent clearly (validatePowerSupplyCapacity, calculateRequiredPowerSupplyWattage, isHighPerformanceGpu).
+
+**Why is it better?**
+* Null checks are encapsulated in a single helper method, reducing the risk of NullPointerException
+* Method names describe their exact behavior without requiring abbreviations.
+
+## 2)
+BEFORE
+
+```java
+private void validateConfig(){
+    if (!"GAMING".equalsIgnoreCase(usageType)){
+        return;
+    }
+    if (isHighPerformGPU()){
+        if (ramGb < 16){
+            throw new IllegalArgumentException(
+                    "Gaming configuration with a high-preformance GPU require at least 16GB of RAM"
+            );
+        }
+        if (powerSupplyW < 750) {
+            throw new IllegalArgumentException(
+                    "Gaming configurations with a high-performance " +
+                            "graphics card require at least a 750W power supply."
+            );
+        }
+        if ("Stock".equalsIgnoreCase(coolingType)) {
+            throw new IllegalArgumentException(
+                    "Gaming configurations with a high-performance " +
+                            "graphics card require non-stock cooling."
+            );
+        }
+    }
+}
+```
+AFTER
+```java
+private void validateGamingConfig() {
+    if (!isGamingProfile()) {
+        return;
+    }
+    if (isHighPerformanceGpu()) {
+        validateGamingRam();
+        validateGamingPowerSupply();
+        validateGamingCooling();
+    }
+}
+
+private boolean isGamingProfile() {
+    return "GAMING".equalsIgnoreCase(usageType);
+}
+
+private void validateGamingRam() {
+    if (ramGb < 16) {
+        throw new IllegalArgumentException(
+                "Gaming configuration with a high-performance GPU requires at least 16GB of RAM"
+        );
+    }
+}
+
+private void validateGamingPowerSupply() {
+    if (powerSupplyW < 750) {
+        throw new IllegalArgumentException(
+                "Gaming configurations with a high-performance graphics card require at least a 750W power supply."
+        );
+    }
+}
+
+private void validateGamingCooling() {
+    if ("Stock".equalsIgnoreCase(coolingType)) {
+        throw new IllegalArgumentException(
+                "Gaming configurations with a high-performance graphics card require non-stock cooling."
+        );
+    }
+}
+```
+**What was wrong?**
+
+* *validateConfig()* handled RAM, PSU, and cooling validations inside a single monolithic block*
+* High-level domain checks (usageType) were directly mixed with low-level numeric assertions (ramGb < 16)
+
+**Which principle applied?**
+* One Function - One Responsibility: Split each validation assertion into its own dedicated method.*
+* One Level of Abstraction per Function: *validateGamingConfig()* operates purely as a high-level coordinator.
+
+**Why is it better?**
+* Reading validateGamingConfig() gives an immediate top-level overview of gaming build constraints
+* Modifying rules for cooling or memory does not impact unrelated validation logic
+
+
+## 3)
+BEFORE
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        NetworkAdapter networkAdapter = new NetworkAdapter("Intel", "Wi-Fi 6E", 2500);
+
+        PCpresetDirector director = new PCpresetDirector();
+
+        PCconfig basic = director.PCBasic();
+        PCconfig gaming = director.PCGaming();
+        PCconfig workstation = director.PCWorkstation();
+        // ...
+    }
+}
+
+public class PCpresetDirector {
+    public PCconfig PCBasic(){ ... }
+    public PCconfig PCGaming(){ ... }
+    public PCconfig PCWorkstation(){ ... }
+}
+```
+AFTER
+```java
+    public class Main {
+        public static void main(String[] args) {
+            PCPresetDirector director = new PCPresetDirector();
+
+            PCconfig basicPC = director.buildBasicPC();
+            PCconfig gamingPC = director.buildGamingPC();
+            PCconfig workstationPC = director.buildWorkstationPC();
+            ...
+        }
+    }
+
+    public class PCPresetDirector {
+        public PCconfig buildBasicPC() { ... }
+        public PCconfig buildGamingPC() { ... }
+        public PCconfig buildWorkstationPC() { ... }
+    }
+```
+**What was wrong?**
+
+* Unused Variables: *The networkAdapter* variable was instantiated in main() but never used or passed anywhere
+
+**Which principle applied?**
+* Use Verb Forms for Method Names: Renamed build methods to start with active verbs (*buildBasicPC()*)
+* Clean Up Unused Variables: Removed *networkAdapter* from main()
+
+**Why is it better?**
+* Method names clearly communicate the construction action
+* The main() method is clutter-free and contains no unused references
+
+
+# Part F - Design Decision
+
+## Decision
+Introduce a dedicated *PCPresetDirector* class to encapsulate standard assembly recipes (*buildBasicPC()*, *buildGamingPC()*, *buildWorkstationPC()*)
+## Alternative
+Omit the *Director* entirely and require the *Client* to construct standard configurations manually via long Builder method chains
+## Reasoning
+While the Builder provides fine-grained flexibility, repeating 15+ method calls across client code for standard setups violates the DRY principle. The *PCPresetDirector* encapsulates common build recipes into clean, single-method invocations, separating how to build (Builder) from what standard profiles exist (Director)
+
+# Part G - UML diagram
+### in the docs file
+
+* PCpresetDirector - is responsible for ready-made build configurations, such as Basic, Gaming, and Workstation
+* PCconfig.Builder - is responsible for the step-by-step creation of the object
+* PCconfig - is the final product
+* NetworkAdapter - is used as a separate supporting object within the configuration
+
+## Table
+| Builder Role          | Class              | Responsibility                                                         |
+|-----------------------|:-------------------| ---------------------------------------------------------------------- |
+| Product               | `PCconfig`         | Represents the final computer configuration                            |
+| Builder               | `PCconfig.Builder` | Stores configuration values and provides fluent construction methods   |
+| Director              | `PCpresetDirector` | Defines reusable Basic, Gaming, and Workstation construction sequences |
+| Client                | `Main`             | Requests predefined configurations from the Director                   |
