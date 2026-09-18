@@ -223,20 +223,20 @@ public class PCconfig {
         }
 
         private void validateRam() {
-            if (ramGb < 0) {
+            if (ramGb <= 0) {
                 throw new IllegalArgumentException("ramGb must be greater than 0 GB");
             }
         }
 
         private void validateStorage() {
-            if (storageGb < 0) {
+            if (storageGb <= 0) {
                 throw new IllegalArgumentException("storageGb must be greater than 0 GB");
             }
         }
 
         private void validateBudget() {
             if (budget < 0) {
-                throw new IllegalArgumentException("budget must be greater than 0 GB");
+                throw new IllegalArgumentException("budget must be greater than 0$");
             }
         }
 

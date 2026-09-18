@@ -766,3 +766,160 @@ While the Builder provides fine-grained flexibility, repeating 15+ method calls 
 | Builder               | `PCconfig.Builder` | Stores configuration values and provides fluent construction methods   |
 | Director              | `PCpresetDirector` | Defines reusable Basic, Gaming, and Workstation construction sequences |
 | Client                | `Main`             | Requests predefined configurations from the Director                   |
+
+# Part H – Automated Testing
+
+JUnit 5 was used to verify the correctness of the `PCconfig` Builder implementation
+
+The test suite contains 10 automated tests covering valid configurations, invalid configurations, boundary cases, the individual cross-field constraint, and Builder reuse
+
+## Valid Construction Tests
+
+Three tests verify that the predefined configurations created by `PCpresetDirector` can be built successfully
+
+* `shouldBuildBasicPC()` verifies the Basic PC configuration.
+* `shouldBuildGamingPC()` verifies the Gaming PC configuration.
+* `shouldBuildWorkstationPC()` verifies the Workstation PC configuration.
+
+## Invalid Construction Tests
+
+Three tests verify that invalid individual values are rejected
+
+* `shouldRejectInvalidRam()` verifies that RAM equal to `0` is rejected
+* `shouldRejectInvalidStorage()` verifies that storage equal to `0` is rejected
+* `shouldRejectInvalidBudget()` verifies that a negative budget is rejected
+
+The tests use `assertThrows()` because an `IllegalArgumentException` is expected when an invalid configuration is built
+
+## Boundary Tests
+
+Two boundary tests verify the minimum values accepted by the configuration rules
+
+* `shouldAcceptMinimumGamingRam()` verifies that a Gaming PC with exactly 16 GB of RAM is accepted
+* `shouldAcceptMinimumGamingPowerSupply()` verifies that a Gaming PC with exactly 750W of power supply is accepted
+
+## Individual Cross-Field Constraint
+
+The test `shouldRejectGamingPCWithInsufficientRam()` verifies the project's individual constraint
+
+A Gaming configuration with a high-performance graphics card requires at least 16 GB of RAM. The test attempts to create a Gaming PC with 8 GB of RAM and expects an `IllegalArgumentException`
+
+This demonstrates that the Builder validates relationships between multiple configuration parameters rather than checking only individual values.
+
+## Builder Reuse and Product Independence
+
+The test `shouldKeepProductIndependentFromBuilder()` verifies that an already-created `PCconfig` object is independent from later changes to the Builder.
+
+First, a Basic configuration is created. The same Builder is then modified and used to create another configuration.
+
+The test verifies that:
+
+* the two products are different objects;
+* their configurations are different;
+* changing the Builder after the first `build()` does not modify the first product.
+
+This demonstrates that the Builder creates a separate `PCconfig` object during each `build()` operation.
+# Sample Program Output
+```
+-----BASIC-----
+PC Configuration:
+Processor: Intel Core i3-12100
+Motherboard: MSI H610M
+RAM: 8 GB
+Storage: 256 GB
+Usage type: OFFICE
+Graphics Card: Integrated Graphics
+Power Supply: 550 W
+Cooling: Stock
+Case: Standard ATX Case
+Storage Type: SSD
+Operating System: Windows 11
+RAM Type: DDR4
+RAM Modules: 2
+Storage Devices: 1
+Monitor Count: 1
+Monitor Size: 24.0"
+Monitor Resolution: 1920x1080
+Keyboard: Standard Keyboard
+Mouse: Standard Mouse
+Wi-Fi: false
+Bluetooth: false
+Ethernet Speed: 1000 Mbps
+USB Ports: 6
+Fan Count: 2
+RGB Lighting: false
+Sound Card: Integrated
+Webcam: null
+Microphone: null
+Network Adapter: null
+Budget: $450.0
+
+-----GAMING-----
+PC Configuration:
+Processor: AMD Ryzen 7 7800X3D
+Motherboard: ASUS ROG STRIX B650
+RAM: 32 GB
+Storage: 2000 GB
+Usage type: GAMING
+Graphics Card: NVIDIA RTX 4080 Super
+Power Supply: 850 W
+Cooling: Liquid 360mm
+Case: NZXT H7 Flow
+Storage Type: NVMe SSD
+Operating System: Windows 11
+RAM Type: DDR5
+RAM Modules: 2
+Storage Devices: 1
+Monitor Count: 2
+Monitor Size: 27.0"
+Monitor Resolution: 2560x1440
+Keyboard: Standard Keyboard
+Mouse: Standard Mouse
+Wi-Fi: true
+Bluetooth: true
+Ethernet Speed: 1000 Mbps
+USB Ports: 6
+Fan Count: 6
+RGB Lighting: true
+Sound Card: Integrated
+Webcam: null
+Microphone: null
+Network Adapter: null
+Budget: $2500.0
+
+-----WORKSTATION-----
+PC Configuration:
+Processor: Intel Core i9-14900K
+Motherboard: ASUS ProArt Z790
+RAM: 64 GB
+Storage: 4000 GB
+Usage type: WORKSTATION
+Graphics Card: NVIDIA RTX 4090
+Power Supply: 1000 W
+Cooling: Custom Liquid
+Case: Fractal Design Meshify 2 XL
+Storage Type: NVMe SSD
+Operating System: Windows 11
+RAM Type: DDR5
+RAM Modules: 4
+Storage Devices: 3
+Monitor Count: 3
+Monitor Size: 32.0"
+Monitor Resolution: 3840x2160
+Keyboard: Standard Keyboard
+Mouse: Standard Mouse
+Wi-Fi: true
+Bluetooth: true
+Ethernet Speed: 10000 Mbps
+USB Ports: 10
+Fan Count: 7
+RGB Lighting: false
+Sound Card: External Audio Interface
+Webcam: 4K Pro Webcam
+Microphone: Studio XLR Microphone
+Network Adapter: null
+Budget: $5000.0
+```
+
+# Github repository link 
+https://github.com/DanialNurumbet/SDP-assignment1.git
