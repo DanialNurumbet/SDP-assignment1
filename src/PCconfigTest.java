@@ -107,6 +107,7 @@ public class PCconfigTest {
         assertNotNull(gaming);
     }
 
+
     @Test
     void shouldRejectGamingPCWithInsufficientRam() {
 
@@ -125,6 +126,11 @@ public class PCconfigTest {
                         .build()
         );
     }
+
+
+    // =========================
+    // BUILDER REUSE
+    // =========================
 
     @Test
     void shouldKeepProductIndependentFromBuilder() {

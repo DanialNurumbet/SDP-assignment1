@@ -15,6 +15,11 @@ public class PCpresetDirector {
     }
 
     public PCconfig buildGamingPC(){
+        NetworkAdapter adapter = new NetworkAdapter(
+                "TP-Link",
+                "Wi-Fi 5",
+                1000
+        );
         return new PCconfig.Builder(
                 "AMD Ryzen 7 7800X3D",
                 "ASUS ROG STRIX B650",
@@ -37,6 +42,7 @@ public class PCpresetDirector {
                 .fanCount(6)
                 .rgbLighting(true)
                 .budget(2500.0)
+                .networkAdapter(adapter)
                 .build();
     }
 
